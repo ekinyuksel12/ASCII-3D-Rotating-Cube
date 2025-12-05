@@ -3,8 +3,11 @@
 #include <string.h>
 #include <unistd.h>
 
+//Console Size
 #define WIDTH 320
 #define HEIGHT 88
+
+#define TWO_PI 6.283185307f
 
 const char *luminance = ".,-~:;=!*#$@";
 
@@ -15,7 +18,8 @@ int distanceFromCam = 100;
 float K1 = 40;
 
 //Degrees for rotation
-float A,B,C;
+float A = TWO_PI/8,B = TWO_PI/8,C = TWO_PI/8;
+float lightAngleIncrement = 0.05f;
 float x,y,z;
 float ooz; //one over z
 int xProjected, yProjected;
@@ -24,7 +28,7 @@ int idx;
 float lightX = 0, lightY = -1, lightZ = -1;
 float magnitudeOfLight = sqrt(2);
 
-float cubeWidth = 20;
+float cubeWidth = 35;
 int width = WIDTH;
 int height = HEIGHT;
 
@@ -49,6 +53,10 @@ float calculateZ(float i, float j, float k) {
     return i * (sin(B)) 
         - j * (sin(A) * cos(B))
         + k * (cos(A) * cos(B));
+}
+
+float vectorMagnitude (float  x, float y, float z){
+    return sqrt(x * x + y * y + z * z);
 }
 
 char calculateShade(int normalX, int normalY, int normalZ){
@@ -101,6 +109,8 @@ int main () {
         memset(screenBuffer, backgroundASCII, width * height);
         memset(zBuffer, 0, width * height * 4);
 
+        magnitudeOfLight = vectorMagnitude(lightX, lightY, lightZ);
+
         char shadeBack  = calculateShade(0, 0, -1);
         char shadeRight = calculateShade(1, 0, 0);
         char shadeLeft  = calculateShade(-1, 0, 0);
@@ -124,9 +134,16 @@ int main () {
             putchar(k % width ? screenBuffer[k]: 10);
         }      
         
-        A += 0.05;
-        B += 0.05;
-        C += 0.05;
+        // A += 0.05;
+        // B += 0.05;
+        // C += 0.05;
+        
+        float tempX = lightX;
+        float tempZ = lightZ;
+        
+        lightX = tempX * cos(lightAngleIncrement) + tempZ * sin(lightAngleIncrement);
+        lightZ = -tempX * sin(lightAngleIncrement) + tempZ * cos(lightAngleIncrement);
+
         usleep(8000 * 2);
     }
 
