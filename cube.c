@@ -133,7 +133,8 @@ void calculatePoints (float cubeX, float cubeY, float cubeZ, int normalX, int no
 
 int main () {
     printf("\x1b[2J"); //Clear Screen ANSII code
-    
+    printf("\x1b[31m"); //Set color to red
+
     //Main loop
     while (1) {
         //Clear buffers
