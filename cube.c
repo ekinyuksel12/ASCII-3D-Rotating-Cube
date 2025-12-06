@@ -13,19 +13,19 @@ const char *luminance = ".,-~:;=!*#$@";
 
 //Character that is used for the background
 int backgroundASCII = ' ';
-float incrementSpeed = 0.6;
-int distanceFromCam = 100;
+float incrementSpeed = 0.8f;
+int distanceFromCam = 110;
 float K1 = 40;
 
 //Degrees for rotation
-float A = TWO_PI/8,B = TWO_PI/8,C = TWO_PI/8;
-float lightAngleIncrement = 0.05f;
+float A, B, C;
+float lightAngleIncrement = 0.0f;
 float x,y,z;
 float ooz; //one over z
 int xProjected, yProjected;
 int idx;
 
-float lightX = 0, lightY = -1, lightZ = -1;
+float lightX = -30, lightY = 0, lightZ = -110;
 float magnitudeOfLight = sqrt(2);
 
 float cubeWidth = 35;
@@ -59,20 +59,32 @@ float vectorMagnitude (float  x, float y, float z){
     return sqrt(x * x + y * y + z * z);
 }
 
-char calculateShade(int normalX, int normalY, int normalZ){
+char calculateShade(float pixelX, float pixelY, float pixelZ, int normalX, int normalY, int normalZ){
     float rotatedNormalX = calculateX(normalX, normalY, normalZ);
     float rotatedNormalY = calculateY(normalX, normalY, normalZ);
     float rotatedNormalZ = calculateZ(normalX, normalY, normalZ);
 
-    // Dot product of normal vector and light vector tells us how aligned the surface is with the light
-    float lightAllignment = (rotatedNormalX * lightX + rotatedNormalY * lightY + rotatedNormalZ * lightZ);
+    // Calculate the Vector from the Pixel to the Light Source
+    float lx = lightX - pixelX;
+    float ly = lightY - pixelY;
+    float lz = lightZ - pixelZ;
 
-    // Normalize L by dividing by the magnitude of the light vector. 
-    // Now L is guaranteed to be in the range [-1.0, 1.0]
-    lightAllignment = lightAllignment / magnitudeOfLight;
+    // Normalize light vectors by dividing by the magnitude of the light vector. 
+    // Now light vectors are guaranteed to be in the range [-1.0, 1.0]
+    float distance = vectorMagnitude(lx, ly, lz);
+    lx /= distance;
+    ly /= distance;
+    lz /= distance;
 
+    // Calculate Dot Product (Normal . LightVector)
+    float lightAlignment = (rotatedNormalX * lx + rotatedNormalY * ly + rotatedNormalZ * lz);
+
+    // If the dot product is < 0, the face is pointing away from the light
+    // Make them the darkest ASCII character
+    if (lightAlignment < 0) return '.';
+    
     // Map the L value to our ASCII palette. L is now in range [0, 11]
-    int index = (int)((lightAllignment + 1.0f) * 5.5f);
+    int index = (int)((lightAlignment + 1.0f) * 5.5f);
 
     // Clamp the index
     if (index < 0) index = 0;
@@ -81,10 +93,15 @@ char calculateShade(int normalX, int normalY, int normalZ){
     return luminance[index];
 }
 
-void calculatePoints (float cubeX, float cubeY, float cubeZ, int ch){
+void calculatePoints (float cubeX, float cubeY, float cubeZ, int normalX, int normalY, int normalZ){
     x = calculateX(cubeX, cubeY, cubeZ);
     y = calculateY(cubeX, cubeY, cubeZ);
-    z = calculateZ(cubeX, cubeY, cubeZ) + distanceFromCam;
+
+    float rawZ = calculateZ(cubeX, cubeY, cubeZ);
+
+    z = rawZ + distanceFromCam;
+
+    char ch = calculateShade(x, y, rawZ, normalX, normalY, normalZ);
 
     ooz = 1/z;
 
@@ -111,21 +128,14 @@ int main () {
 
         magnitudeOfLight = vectorMagnitude(lightX, lightY, lightZ);
 
-        char shadeBack  = calculateShade(0, 0, -1);
-        char shadeRight = calculateShade(1, 0, 0);
-        char shadeLeft  = calculateShade(-1, 0, 0);
-        char shadeFront = calculateShade(0, 0, 1);
-        char shadeTop   = calculateShade(0, -1, 0);
-        char shadeBottom= calculateShade(0, 1, 0);
-
         for (float cubeX = -cubeWidth; cubeX < cubeWidth; cubeX += incrementSpeed){
             for (float cubeY = -cubeWidth; cubeY < cubeWidth; cubeY += incrementSpeed){
-                calculatePoints(cubeX, cubeY, -cubeWidth, shadeBack);
-                calculatePoints(cubeWidth, cubeY, cubeX, shadeRight);
-                calculatePoints(-cubeWidth, cubeY, -cubeX, shadeLeft);
-                calculatePoints(-cubeX, cubeY, cubeWidth, shadeFront);
-                calculatePoints(cubeX, -cubeWidth, -cubeY, shadeTop);
-                calculatePoints(cubeX, cubeWidth, cubeY, shadeBottom);
+                calculatePoints(cubeX, cubeY, -cubeWidth, 0, 0, -1);
+                calculatePoints(cubeWidth, cubeY, cubeX, 1, 0, 0);
+                calculatePoints(-cubeWidth, cubeY, -cubeX, -1, 0, 0);
+                calculatePoints(-cubeX, cubeY, cubeWidth, 0, 0, 1);
+                calculatePoints(cubeX, -cubeWidth, -cubeY, 0, -1, 0);
+                calculatePoints(cubeX, cubeWidth, cubeY, 0, 1, 0);
             }
         }
 
@@ -134,10 +144,10 @@ int main () {
             putchar(k % width ? screenBuffer[k]: 10);
         }      
         
-        // A += 0.05;
-        // B += 0.05;
-        // C += 0.05;
-        
+        A += 0.05; if(A > TWO_PI) A -= TWO_PI;
+        B += 0.05; if(B > TWO_PI) B -= TWO_PI;
+        C += 0.05; if(C > TWO_PI) C -= TWO_PI;
+
         float tempX = lightX;
         float tempZ = lightZ;
         
