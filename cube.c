@@ -2,7 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+#ifndef _WIN32
+    // Include for POSIX systems (Linux, macOS)
+    #include <unistd.h>
+#else
+    // Include for Windows
+    #include <windows.h>
+
+    // Define usleep equivalent using the Windows API Sleep function
+    void usleep(long usec) {
+        // Convert microseconds (usec) to milliseconds (msec) for Sleep()
+        // Note: Sleep(1) is the minimum, so this won't be microsecond accurate.
+        long msec = usec / 1000;
+        if (msec == 0) msec = 1; 
+        Sleep(msec);
+    }
+#endif
 
 //Console Size
 #define WIDTH 320
@@ -35,6 +50,7 @@ int height = HEIGHT;
 
 //Creating buffers for charecters on the screen and depth map.
 char screenBuffer[WIDTH * HEIGHT];
+char outputBuffer[WIDTH * HEIGHT + 1];
 float zBuffer[WIDTH * HEIGHT];
 
 //Rotation matrix calculations for the points
@@ -132,6 +148,7 @@ void calculatePoints (float cubeX, float cubeY, float cubeZ, int normalX, int no
 }
 
 int main () {
+    printf("\x1b[8;%d;%dt", HEIGHT, WIDTH); //Resize the cmd
     printf("\x1b[2J"); //Clear Screen ANSII code
     printf("\x1b[31m"); //Set color to red
 
@@ -155,10 +172,15 @@ int main () {
         }
 
         printf("\x1b[H");
+
+        int p = 0;
         for (int k = 0; k < width * height; k++){
-            putchar(k % width ? screenBuffer[k]: 10);
-        }      
+            outputBuffer[p++] = (k % width) ? screenBuffer[k] : 10;
+        }
+        outputBuffer[p] = '\0';
         
+        puts(outputBuffer);
+
         A += 0.05; if(A > TWO_PI) A -= TWO_PI;
         B += 0.05; if(B > TWO_PI) B -= TWO_PI;
         C += 0.05; if(C > TWO_PI) C -= TWO_PI;
