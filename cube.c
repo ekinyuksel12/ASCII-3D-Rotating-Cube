@@ -29,7 +29,7 @@ int idx;
 float lightX = -30, lightY = 0, lightZ = -110;
 float magnitudeOfLight = sqrt(2);
 
-float cubeWidth = 35;
+float cubeWidth = 40;
 int width = WIDTH;
 int height = HEIGHT;
 
@@ -84,20 +84,21 @@ char calculateShade(float pixelX, float pixelY, float pixelZ, int normalX, int n
     // Make them the darkest ASCII character
     if (lightAlignment < 0) return '.';
 
+    float attenuation = 3000.0f / (distance * distance);
     float ambient = 0.2; 
-    float intensity = lightAlignment + ambient;
+    float finalIntensity = lightAlignment + ambient;
 
-    // Clamp intensity strictly between 0 and 1
+    // Clamp finalIntensity strictly between 0 and 1
     // This handles the shadows gracefully without a hard 'if' check
-    if (intensity < 0) intensity = 0;
-    if (intensity > 1) intensity = 1;
+    if (finalIntensity < 0) finalIntensity = 0;
+    if (finalIntensity > 1) finalIntensity = 1;
 
     float noise = ((float)(rand() % 100) / 100.0f) * 0.1f - 0.05f;
 
-    intensity += noise;
+    finalIntensity += noise;
     
     // Map the L value to our ASCII palette. L is now in range [0, 11]
-    int index = (int)((intensity + 1.0f) * 5.5f);
+    int index = (int)(finalIntensity * 11.0f);
 
     // Clamp the index
     if (index < 0) index = 0;
