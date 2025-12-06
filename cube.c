@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 //Console Size
@@ -82,6 +83,10 @@ char calculateShade(float pixelX, float pixelY, float pixelZ, int normalX, int n
     // If the dot product is < 0, the face is pointing away from the light
     // Make them the darkest ASCII character
     if (lightAlignment < 0) return '.';
+
+    float noise = ((float)(rand() % 100) / 100.0f) * 0.1f - 0.05f;
+
+    lightAlignment += noise;
     
     // Map the L value to our ASCII palette. L is now in range [0, 11]
     int index = (int)((lightAlignment + 1.0f) * 5.5f);
