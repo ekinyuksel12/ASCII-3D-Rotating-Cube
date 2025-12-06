@@ -84,12 +84,20 @@ char calculateShade(float pixelX, float pixelY, float pixelZ, int normalX, int n
     // Make them the darkest ASCII character
     if (lightAlignment < 0) return '.';
 
+    float ambient = 0.2; 
+    float intensity = lightAlignment + ambient;
+
+    // Clamp intensity strictly between 0 and 1
+    // This handles the shadows gracefully without a hard 'if' check
+    if (intensity < 0) intensity = 0;
+    if (intensity > 1) intensity = 1;
+
     float noise = ((float)(rand() % 100) / 100.0f) * 0.1f - 0.05f;
 
-    lightAlignment += noise;
+    intensity += noise;
     
     // Map the L value to our ASCII palette. L is now in range [0, 11]
-    int index = (int)((lightAlignment + 1.0f) * 5.5f);
+    int index = (int)((intensity + 1.0f) * 5.5f);
 
     // Clamp the index
     if (index < 0) index = 0;
