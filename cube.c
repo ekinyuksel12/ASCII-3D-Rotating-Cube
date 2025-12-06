@@ -42,7 +42,7 @@ int xProjected, yProjected;
 int idx;
 
 float lightX = -30, lightY = 0, lightZ = -110;
-float magnitudeOfLight = sqrt(2);
+float magnitudeOfLight;
 
 float cubeWidth = 40;
 int width = WIDTH;
